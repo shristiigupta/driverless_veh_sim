@@ -8,7 +8,6 @@ def is_lane_clear(vehicle, obstacles, target_lane):
     for obs in obstacles:
         obs_lane = (obs.rect.x - ROAD_LEFT) // LANE_WIDTH
         if obs_lane == target_lane:
-            # Only consider obstacles ahead of the vehicle (within 120 pixels)
             if obs.rect.y < vehicle.rect.y and vehicle.rect.y - obs.rect.y < 120:
                 return False
     return True
@@ -28,7 +27,6 @@ def check_obstacle_ahead(vehicle, obstacles, lane):
     return False
 
 def find_clear_lane(vehicle, obstacles, current_lane):
-    # Prefer nearest lanes first (left, then right, then further out)
     for offset in range(1, NUM_LANES):
         left_lane = current_lane - offset
         right_lane = current_lane + offset
@@ -46,12 +44,12 @@ clock = pygame.time.Clock()
 vehicle = Vehicle(get_lane_center_x(0), SCREEN_HEIGHT - 100)
 obstacles = [Obstacle() for _ in range(5)]
 
-# State machine variables
+
 state = "forward"
 target_x = vehicle.rect.x
 reverse_frames = 0
 MAX_REVERSE_FRAMES = 30
-lane_change_speed = 8  # pixels per frame
+lane_change_speed = 8
 
 running = True
 while running:
@@ -79,17 +77,16 @@ while running:
 
     elif state == "reversing":
         vehicle.stop()
-        vehicle.rect.y += VEHICLE_SPEED  # Move straight back
+        vehicle.rect.y += VEHICLE_SPEED  
         reverse_frames += 1
         if reverse_frames >= MAX_REVERSE_FRAMES:
-            # After reversing, check again for clear lane
             vehicle_lane = get_lane(vehicle.rect)
             target_lane = find_clear_lane(vehicle, obstacles, vehicle_lane)
             if target_lane is not None:
                 target_x = get_lane_center_x(target_lane)
                 state = "changing_lane"
             else:
-                reverse_frames = 0  # Keep reversing if still blocked
+                reverse_frames = 0  
 
     elif state == "changing_lane":
         vehicle.stop()
@@ -102,7 +99,6 @@ while running:
             else:
                 vehicle.rect.x -= lane_change_speed
 
-    # Drawing code
     pygame.draw.rect(screen, BLACK, (ROAD_LEFT, 0, ROAD_WIDTH, SCREEN_HEIGHT))
     for i in range(1, NUM_LANES):
         x = ROAD_LEFT + i * LANE_WIDTH
